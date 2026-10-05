@@ -7,7 +7,12 @@ A static, browser-based gear planner for **EverQuest Legends** three-class chara
 - React and Vite provide the static interface.
 - `scripts/fetch-wiki-items.mjs` reads equipment pages from the EQL Wiki MediaWiki API, excludes post-Classic and above-cap gear, and normalizes item slots, allowed classes, stats, lore status, and linked drop/quest/vendor sources.
 - The optimizer runs entirely in the browser; there is no application server.
+- Players can import one or more tab-separated EQL `/outputfile inventory` exports. The browser matches recommended gear against equipped items, bags, banks, Dragon's Hoard, and other exported storage locations without transmitting or retaining inventory data.
 - GitHub Actions refreshes the dataset, tests, builds, and deploys to GitHub Pages on pushes, manual runs, and once daily.
+
+## Inventory matching
+
+At a banker, open the Bank, Dragon's Hoard, and Tradeskill Depot, then run `/outputfile inventory` in game. Import the resulting `*-Inventory.txt` file in step 04. Multiple character files can be selected together; repeated shared-bank rows are counted once.
 
 ## Local development
 
