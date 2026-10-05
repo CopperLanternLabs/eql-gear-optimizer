@@ -30,4 +30,22 @@ describe('wiki item normalization', () => {
     const mislabeled = parseItem('Cold Steel Bracelet', `{{Classic Era}}\n{{Itempage\n|statsblock = Slot: WRIST<br>AC: 14<br>Class: WAR CLR PAL SHD BRD<br>\n|dropsfrom =\n[[Velketor's Labyrinth]]\n* [[Ular Icepaw]]\n}}`)
     assert.equal(isAvailableAtCap(mislabeled, 50), false)
   })
+
+  it('withholds unlabelled enchanted cultural recipes until the wiki confirms them as Classic', () => {
+    const laterCultural = parseItem('Dwarven Plate Collar (Enchanted Imbued)', `{{Itempage
+|statsblock = Slot: NECK<br>AC: 12 STA: +5<br>Class: WAR CLR PAL RNG SHD BRD ROG SHM<br>
+|playercrafted =
+[[Blacksmithing]]
+* [[Dwarven Plate Collar (Enchanted Imbued) Recipe|Yield: Dwarven Plate Collar x1]] ([[Stormguard Forge]])
+}}`)
+    const confirmedClassic = parseItem('Imbued Electrum Opal Amulet', `{{Classic Era}}
+{{Itempage
+|statsblock = Slot: NECK<br>AC: 3 WIS: +3<br>Class: ALL<br>
+|playercrafted =
+[[Jewelry Making]]
+* [[Imbued Electrum Opal Amulet Recipe|Yield: Imbued Electrum Opal Amulet x1]] ([[Jeweler's Kit]])
+}}`)
+    assert.equal(isAvailableAtCap(laterCultural, 50), false)
+    assert.equal(isAvailableAtCap(confirmedClassic, 50), true)
+  })
 })

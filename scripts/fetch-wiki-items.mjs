@@ -134,7 +134,12 @@ export function isAvailableAtCap(item, levelCap = 50) {
   const hasPostClassicSource = sourceZones.some((zone) => POST_CLASSIC_ZONES.has(zone))
   const hasKnownCurrentSource = sourceZones.some((zone) => !POST_CLASSIC_ZONES.has(zone))
   const postClassicOnly = hasPostClassicSource && !hasKnownCurrentSource
-  return currentEra && withinLevelCap && !postClassicOnly
+  // Cultural recipes were added after launch, but many individual item pages have
+  // no era template. Keep uncertain upgraded recipes out unless EQL marks them Classic.
+  const unconfirmedAdvancedCrafting = !item.era
+    && /\b(?:enchanted|imbued)\b/i.test(item.name)
+    && item.sources.some((source) => source.type === 'Crafted')
+  return currentEra && withinLevelCap && !postClassicOnly && !unconfirmedAdvancedCrafting
 }
 
 async function categoryTitles(category) {
