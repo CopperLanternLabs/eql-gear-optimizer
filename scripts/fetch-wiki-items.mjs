@@ -9,6 +9,14 @@ const USER_AGENT = 'eql-gear-optimizer/0.1 (https://github.com/johnfking/eql-gea
 const SLOT_CATEGORIES = ['Arms','Back','Chest','Ear','Face','Feet','Fingers','Hands','Head','Legs','Neck','Primary','Range','Secondary','Shoulders','Waist','Wrist']
 const STAT_NAMES = ['AC','HP','MANA','STR','STA','DEX','AGI','INT','WIS','CHA','SV FIRE','SV COLD','SV MAGIC','SV DISEASE','SV POISON']
 const CLASS_CODES = ['WAR','CLR','PAL','RNG','SHD','DRU','MNK','BRD','ROG','SHM','NEC','WIZ','MAG','ENC','BST','BER']
+const POST_CLASSIC_ZONES = new Set([
+  // Ruins of Kunark
+  'burning wood', 'burning woods', 'cabilis', 'chardok', 'city of mist', 'crypt of dalnir', 'dalnir', 'dreadlands', 'emerald jungle', 'field of bone', 'firiona vie', 'frontier mountains', "karnor's castle", "kurn's tower", 'lake of ill omen', 'mines of nurga', 'nurga', 'old sebilis', 'sebilis', 'skyfire mountains', 'swamp of no hope', 'temple of droga', 'the overthere', 'timorous deep', "trakanon's teeth", "veeshan's peak", 'warsliks woods',
+  // Scars of Velious
+  'cobalt scar', 'crystal caverns', 'dragon necropolis', 'eastern wastes', 'great divide', 'iceclad ocean', 'kael drakkel', 'plane of mischief', "siren's grotto", 'skyshrine', "sleeper's tomb", 'temple of veeshan', 'thurgadin', 'tower of frozen shadow', "velketor's labyrinth", 'wakening lands', 'western wastes',
+  // Shadows of Luclin and later
+  'acrylia caverns', 'akheva ruins', 'dawnshroud peaks', "echo caverns", 'fungus grove', 'grimling forest', 'hollowshade moor', 'katta castellum', "maiden's eye", 'marus seru', 'mons letalis', 'netherbian lair', 'paludal caverns', 'sanctus seru', 'scarlet desert', 'shadeweaver’s thicket', "shadeweaver's thicket", 'shadow haven', 'ssraeshza temple', 'tenebrous mountains', 'the bazaar', 'the deep', 'the grey', 'the nexus', 'twilight sea', 'umbral plains', 'vex thal',
+])
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 function wikiUrl(title) {
@@ -83,6 +91,9 @@ export function parseItem(title, text) {
   const block = fieldValue(text, 'statsblock')
   if (!block) return null
   const clean = block.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ' ').replace(/&nbsp;|\u00a0/g, ' ')
+  const era = text.match(/\{\{\s*([^{}|\n]+?)\s+Era(?:\|[^}]*)?}}/i)?.[1]?.trim() || null
+  const requiredLevelMatch = clean.match(/\bReq(?:uired)?\.?\s+Level(?:\s+of)?\s*:?\s*(\d+)/i)
+  const requiredLevel = requiredLevelMatch ? Number(requiredLevelMatch[1]) : null
   const slotLine = clean.match(/(?:^|\n)\s*Slots?\s*:\s*([^\n]+)/i)?.[1]
   const classLine = clean.match(/(?:^|\n)\s*Class(?:es)?\s*:\s*([^\n]+)/i)?.[1]
   if (!slotLine || !classLine) return null
@@ -108,9 +119,22 @@ export function parseItem(title, text) {
     classes,
     stats,
     lore: /\bLORE (?:ITEM|EQUIPPED)\b/i.test(clean),
+    era,
+    requiredLevel,
     wikiUrl: wikiUrl(title),
     sources,
   }
+}
+
+export function isAvailableAtCap(item, levelCap = 50) {
+  if (!item) return false
+  const currentEra = !item.era || item.era.toLowerCase() === 'classic'
+  const withinLevelCap = item.requiredLevel == null || item.requiredLevel <= levelCap
+  const sourceZones = item.sources.map((source) => source.zone?.toLowerCase()).filter(Boolean)
+  const hasPostClassicSource = sourceZones.some((zone) => POST_CLASSIC_ZONES.has(zone))
+  const hasKnownCurrentSource = sourceZones.some((zone) => !POST_CLASSIC_ZONES.has(zone))
+  const postClassicOnly = hasPostClassicSource && !hasKnownCurrentSource
+  return currentEra && withinLevelCap && !postClassicOnly
 }
 
 async function categoryTitles(category) {
@@ -126,18 +150,20 @@ async function categoryTitles(category) {
 
 async function fetchItems(titles) {
   const items = []
+  let unavailable = 0
   for (let index = 0; index < titles.length; index += 50) {
     const batch = titles.slice(index, index + 50)
     const data = await api({ action: 'query', prop: 'revisions', rvprop: 'content', rvslots: 'main', titles: batch.join('|') })
     for (const page of data.query.pages) {
       const text = page.revisions?.[0]?.slots?.main?.content || ''
       const item = parseItem(page.title, text)
-      if (item) items.push(item)
+      if (item && isAvailableAtCap(item)) items.push(item)
+      else if (item) unavailable++
     }
     if ((index / 50) % 10 === 0) process.stdout.write(`Normalized ${Math.min(index + 50, titles.length)}/${titles.length} pages\n`)
     await delay(75)
   }
-  return items
+  return { items, unavailable }
 }
 
 async function main() {
@@ -145,14 +171,14 @@ async function main() {
   let titles = [...new Set(titleGroups.flat())].sort((a, b) => a.localeCompare(b))
   const limit = Number(process.env.EQL_ITEM_LIMIT || 0)
   if (limit > 0) titles = titles.slice(0, limit)
-  const items = await fetchItems(titles)
+  const { items, unavailable } = await fetchItems(titles)
   const payload = {
-    meta: { generatedAt: new Date().toISOString(), source: 'https://eqlwiki.com/', license: 'CC BY-SA 3.0', pagesScanned: titles.length },
+    meta: { generatedAt: new Date().toISOString(), source: 'https://eqlwiki.com/', license: 'CC BY-SA 3.0', pagesScanned: titles.length, era: 'Classic', levelCap: 50, unavailableExcluded: unavailable },
     items: items.sort((a, b) => a.name.localeCompare(b.name)),
   }
   await fs.mkdir(path.dirname(OUTPUT), { recursive: true })
   await fs.writeFile(OUTPUT, `${JSON.stringify(payload, null, 2)}\n`)
-  process.stdout.write(`Wrote ${items.length} equippable items to ${OUTPUT}\n`)
+  process.stdout.write(`Wrote ${items.length} Classic-era equippable items to ${OUTPUT} (${unavailable} unavailable items excluded)\n`)
 }
 
 if (path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main().catch((error) => { console.error(error); process.exitCode = 1 })

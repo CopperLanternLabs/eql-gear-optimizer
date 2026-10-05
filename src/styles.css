@@ -14,6 +14,8 @@ h1 em { color: #cf9f59; font-weight: 400; }
 .hero > p { color: #a9a39a; max-width: 650px; font-family: Georgia, serif; font-size: 1.18rem; line-height: 1.65; }
 .data-badge { display: inline-flex; gap: 10px; align-items: center; border: 1px solid #4c4539; padding: 9px 13px; color: #b9b1a4; font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; }
 .data-badge i { width: 7px; height: 7px; background: #8cab67; border-radius: 50%; box-shadow: 0 0 12px #8cab67; }
+.badge-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.era-badge { display: inline-flex; align-items: center; border: 1px solid #4c4539; padding: 9px 13px; color: #c79b59; font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; }
 main { max-width: 1180px; margin: 0 auto; padding: 0 28px 80px; }
 .panel { padding: 54px 0; border-bottom: 1px solid #302c27; }
 .section-heading { display: grid; grid-template-columns: 45px 1fr auto; gap: 20px; align-items: start; margin-bottom: 28px; }
@@ -31,9 +33,18 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 28px 80px; }
 .stat-grid { padding-left: 65px; display: flex; flex-wrap: wrap; gap: 8px; }
 .stat { background: transparent; border: 1px solid #3d3831; padding: 10px 15px; cursor: pointer; color: #aaa49b; font: 600 .77rem monospace; }
 .stat.active { background: #c79b59; color: #17130e; border-color: #c79b59; }
+.tier-value { font-family: Georgia, serif !important; font-size: 1.8rem !important; }
+.tier-control { padding-left: 65px; }
+.tier-control > input { width: 100%; accent-color: #c79b59; }
+.tier-scale { display: flex; justify-content: space-between; margin-top: 8px; }
+.tier-scale button { border: 0; background: transparent; color: #716b62; padding: 4px; cursor: pointer; font: .68rem monospace; }
+.tier-scale button.active { color: #d7a65e; }
+.tier-control p { color: #777169; margin: 12px 0 0; font-size: .76rem; }
+.tier-control strong { color: #bca47e; font-weight: 600; }
 .results { margin-top: 65px; border: 1px solid #40392f; background: #171512; }
 .results-head { display: flex; justify-content: space-between; align-items: end; padding: 32px; border-bottom: 1px solid #3a342c; background: linear-gradient(120deg,#201a13,#171512 60%); }
 .results-head h2 { margin: 9px 0 0; font-size: 2.5rem; }
+.results-head h2 small { color: #8b8173; font: italic 1rem Georgia, serif; letter-spacing: 0; }
 .score { text-align: right; }
 .score span { display: block; color: #7e786f; font-size: .72rem; text-transform: uppercase; letter-spacing: .12em; }
 .score strong { display: block; color: #d7a65e; font-family: Georgia, serif; font-size: 3.4rem; font-weight: 400; line-height: 1; }
@@ -54,6 +65,7 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 28px 80px; }
 .slot { display: flex; gap: 7px; color: #777169; font: 700 .67rem monospace; margin-bottom: 13px; }
 .gear-card > a { color: #eee4d4; font: 400 1.07rem Georgia,serif; text-decoration: none; }
 .gear-card > a:hover { color: #d7a65e; }
+.gear-card > a sup { color: #d7a65e; margin-left: 5px; font: 700 .62rem monospace; }
 .gear-card > small { display: block; margin-top: 10px; color: #69645d; font-size: .67rem; }
 .sources, .source-missing { margin-top: 13px; padding-top: 11px; border-top: 1px solid #2e2a24; color: #777169; font-size: .68rem; }
 .sources details { margin-top: 8px; }
@@ -75,5 +87,5 @@ footer strong, footer span { display: block; }
 footer strong { color: #c7b99f; font-family: Georgia,serif; font-size: 1rem; }
 footer p { margin: 0; }
 footer a { color: #a88c62; }
-@media (max-width: 760px) { .class-grid { grid-template-columns: repeat(2,1fr); padding-left: 0; } .stat-grid { padding-left: 0; } .gear-grid { grid-template-columns: 1fr; } .totals { grid-template-columns: repeat(4,1fr); } footer { grid-template-columns: 1fr; } }
+@media (max-width: 760px) { .class-grid { grid-template-columns: repeat(2,1fr); padding-left: 0; } .stat-grid, .tier-control { padding-left: 0; } .gear-grid { grid-template-columns: 1fr; } .totals { grid-template-columns: repeat(4,1fr); } footer { grid-template-columns: 1fr; } }
 @media (max-width: 480px) { .hero { padding-top: 30px; } .class-grid { grid-template-columns: 1fr; } .section-heading { grid-template-columns: 34px 1fr; } .section-heading > b { display: none; } .results-head { align-items: start; } .score strong { font-size: 2.5rem; } .gear-toolbar { align-items: stretch; flex-direction: column; gap: 12px; } .gear-toolbar input { width: 100%; } }

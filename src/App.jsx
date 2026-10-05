@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CLASSES, STATS, optimize, totalStats } from './optimizer.js'
+import { CLASSES, STATS, optimize, totalStats, upgradeStats } from './optimizer.js'
 
 const DATA_URL = `${import.meta.env.BASE_URL}data/items.json`
 
@@ -40,6 +40,7 @@ function App() {
   const [meta, setMeta] = useState({})
   const [trio, setTrio] = useState(['WAR', 'CLR', 'WIZ'])
   const [target, setTarget] = useState('AC')
+  const [upgradeLevel, setUpgradeLevel] = useState(0)
   const [query, setQuery] = useState('')
   const [error, setError] = useState('')
 
@@ -50,8 +51,8 @@ function App() {
     }).then((data) => { setItems(data.items); setMeta(data.meta) }).catch((err) => setError(err.message))
   }, [])
 
-  const result = useMemo(() => optimize(items, trio, { [target]: 1 }), [items, trio, target])
-  const totals = useMemo(() => totalStats(result.gear), [result])
+  const result = useMemo(() => optimize(items, trio, { [target]: 1 }, upgradeLevel), [items, trio, target, upgradeLevel])
+  const totals = useMemo(() => totalStats(result.gear, upgradeLevel), [result, upgradeLevel])
   const visibleGear = result.gear.filter(({ item, label }) => !query || `${label} ${item?.name || ''}`.toLowerCase().includes(query.toLowerCase()))
 
   return <>
@@ -59,7 +60,7 @@ function App() {
       <div className="hero-top"><span className="eyebrow">A community planning tool</span><span className="rune">✦</span></div>
       <h1>EQL <em>Gear</em> Optimizer</h1>
       <p>Build the strongest kit for your three-class character. Pick a trio, choose the stat that matters, and let the archive do the sorting.</p>
-      <div className="data-badge"><i /> {items.length ? `${items.length.toLocaleString()} items indexed` : 'Loading the archive…'}</div>
+      <div className="badge-row"><div className="data-badge"><i /> {items.length ? `${items.length.toLocaleString()} items indexed` : 'Loading the archive…'}</div><div className="era-badge">Classic era · Level 50</div></div>
     </header>
 
     <main>
@@ -73,9 +74,14 @@ function App() {
         <StatPicker selected={target} setSelected={setTarget} />
       </section>
 
+      <section className="panel setup">
+        <div className="section-heading"><span>03</span><div><h2>Set item potential</h2><p>Compare every candidate at the same EQL upgrade tier.</p></div><b className="tier-value">+{upgradeLevel}</b></div>
+        <div className="tier-control"><input aria-label="Item upgrade tier" type="range" min="0" max="10" step="1" value={upgradeLevel} onChange={(event) => setUpgradeLevel(Number(event.target.value))} /><div className="tier-scale">{Array.from({ length: 11 }, (_, tier) => <button key={tier} className={tier === upgradeLevel ? 'active' : ''} onClick={() => setUpgradeLevel(tier)}>+{tier}</button>)}</div><p><strong>{upgradeLevel * 10}% cumulative scaling</strong> · Positive stats gain at least +1 per tier; displayed values are rounded down.</p></div>
+      </section>
+
       <section className="results">
         <div className="results-head">
-          <div><span className="eyebrow">Optimized loadout</span><h2>{target} above all</h2></div>
+          <div><span className="eyebrow">Optimized loadout</span><h2>{target} above all <small>at +{upgradeLevel}</small></h2></div>
           <div className="score"><span>Combined {target}</span><strong>{result.score > 0 ? `+${result.score}` : '—'}</strong></div>
         </div>
         <div className="trio-line">{trio.map((code) => <span key={code}>{code}</span>)}<small>OR equipability</small></div>
@@ -85,7 +91,7 @@ function App() {
         <div className="gear-grid">
           {visibleGear.map(({ label, item }) => <article key={label} className={label.startsWith('ANY') ? 'gear-card any' : 'gear-card'}>
             <div className="slot"><span>{label.startsWith('ANY') ? '✦' : '◇'}</span>{label}</div>
-            {item ? <><a href={item.wikiUrl} target="_blank" rel="noreferrer">{item.name}</a><div className="item-stats">{Object.entries(item.stats).filter(([,value]) => value).slice(0,5).map(([stat,value]) => <span key={stat} className={stat === target ? 'target' : ''}>{stat} {value > 0 ? '+' : ''}{value}</span>)}</div><small>{item.classes.includes('ALL') ? 'All classes' : item.classes.join(' · ')}</small><Sources sources={item.sources} /></> : <><b className="empty">No matching item</b><small>Try another target or trio</small></>}
+            {item ? <><a href={item.wikiUrl} target="_blank" rel="noreferrer">{item.name}{upgradeLevel > 0 && <sup>+{upgradeLevel}</sup>}</a><div className="item-stats">{Object.entries(upgradeStats(item.stats, upgradeLevel)).filter(([,value]) => value).slice(0,5).map(([stat,value]) => <span key={stat} className={stat === target ? 'target' : ''}>{stat} {value > 0 ? '+' : ''}{value}</span>)}</div><small>{item.classes.includes('ALL') ? 'All classes' : item.classes.join(' · ')}</small><Sources sources={item.sources} /></> : <><b className="empty">No matching item</b><small>Try another target or trio</small></>}
           </article>)}
         </div>
       </section>

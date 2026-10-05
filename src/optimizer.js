@@ -20,18 +20,27 @@ export function isEquipable(item, trio) {
   return item.classes.includes('ALL') || trio.some((classCode) => item.classes.includes(classCode))
 }
 
-export function scoreItem(item, weights) {
-  return Object.entries(weights).reduce((sum, [stat, weight]) => sum + (item.stats[stat] || 0) * weight, 0)
+export function upgradeStats(stats, tier = 0) {
+  return Object.fromEntries(Object.entries(stats).map(([stat, value]) => {
+    if (!tier) return [stat, value]
+    if (value > 0) return [stat, value + Math.max(tier, Math.floor(value * tier * 0.1))]
+    return [stat, Math.floor(value * (1 + tier * 0.1))]
+  }))
 }
 
-export function optimize(items, trio, weights) {
-  const equipable = items.filter((item) => isEquipable(item, trio) && scoreItem(item, weights) > 0)
+export function scoreItem(item, weights, tier = 0) {
+  const stats = upgradeStats(item.stats, tier)
+  return Object.entries(weights).reduce((sum, [stat, weight]) => sum + (stats[stat] || 0) * weight, 0)
+}
+
+export function optimize(items, trio, weights, tier = 0) {
+  const equipable = items.filter((item) => isEquipable(item, trio) && scoreItem(item, weights, tier) > 0)
   let beam = [{ score: 0, gear: [], lore: new Set() }]
 
   for (const [label, slot] of EQUIPMENT_SLOTS) {
     const candidates = equipable
       .filter((item) => slot === 'ANY' || item.slots.includes(slot))
-      .sort((a, b) => scoreItem(b, weights) - scoreItem(a, weights))
+      .sort((a, b) => scoreItem(b, weights, tier) - scoreItem(a, weights, tier))
       .slice(0, 35)
     const choices = [null, ...candidates]
     const next = []
@@ -41,7 +50,7 @@ export function optimize(items, trio, weights) {
         const lore = new Set(state.lore)
         if (item?.lore) lore.add(item.name)
         next.push({
-          score: state.score + (item ? scoreItem(item, weights) : 0),
+          score: state.score + (item ? scoreItem(item, weights, tier) : 0),
           gear: [...state.gear, { label, item }],
           lore,
         })
@@ -52,10 +61,10 @@ export function optimize(items, trio, weights) {
   return beam[0] || { score: 0, gear: [], lore: new Set() }
 }
 
-export function totalStats(gear) {
+export function totalStats(gear, tier = 0) {
   return gear.reduce((totals, { item }) => {
     if (!item) return totals
-    for (const [stat, value] of Object.entries(item.stats)) totals[stat] = (totals[stat] || 0) + value
+    for (const [stat, value] of Object.entries(upgradeStats(item.stats, tier))) totals[stat] = (totals[stat] || 0) + value
     return totals
   }, {})
 }

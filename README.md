@@ -1,11 +1,11 @@
 # EQL Gear Optimizer
 
-A static, browser-based gear planner for **EverQuest Legends** three-class characters. Choose any three classes, pick a target stat, and get a best-in-slot loadout using OR equipability across the trio—including both EQL ANY slots.
+A static, browser-based gear planner for **EverQuest Legends** three-class characters. Choose any three classes, pick a target stat, and get a best-in-slot loadout using OR equipability across the trio—including both EQL ANY slots. Results are limited to the currently available Classic era and level-50 cap, with comparison at item upgrade tiers +0 through +10.
 
 ## How it works
 
 - React and Vite provide the static interface.
-- `scripts/fetch-wiki-items.mjs` reads equipment pages from the EQL Wiki MediaWiki API and normalizes item slots, allowed classes, stats, lore status, and linked drop/quest/vendor sources.
+- `scripts/fetch-wiki-items.mjs` reads equipment pages from the EQL Wiki MediaWiki API, excludes post-Classic and above-cap gear, and normalizes item slots, allowed classes, stats, lore status, and linked drop/quest/vendor sources.
 - The optimizer runs entirely in the browser; there is no application server.
 - GitHub Actions refreshes the dataset, tests, builds, and deploys to GitHub Pages on pushes, manual runs, and once daily.
 

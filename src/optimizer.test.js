@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { isEquipable, optimize } from './optimizer.js'
+import { isEquipable, optimize, upgradeStats } from './optimizer.js'
 
 const item = (name, slots, classes, ac, lore = false) => ({ name, slots, classes, stats: { AC: ac }, lore, wikiUrl: '#' })
 
@@ -13,6 +13,11 @@ describe('trio equipability', () => {
 })
 
 describe('optimizer', () => {
+  it('applies EQL item-tier scaling with a minimum +1 per positive stat per tier', () => {
+    assert.deepEqual(upgradeStats({ AC: 30, STR: 2, CHA: -10 }, 1), { AC: 33, STR: 3, CHA: -11 })
+    assert.deepEqual(upgradeStats({ AC: 30, STR: 2 }, 10), { AC: 60, STR: 12 })
+  })
+
   it('fills both EQL ANY slots from all equippable gear', () => {
     const result = optimize([item('Cap', ['HEAD'], ['WAR'], 10)], ['WAR', 'CLR', 'WIZ'], { AC: 1 })
     assert.equal(result.gear.find((slot) => slot.label === 'ANY 1').item.name, 'Cap')
