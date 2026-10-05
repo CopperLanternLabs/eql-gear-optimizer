@@ -21,6 +21,20 @@ function StatPicker({ selected, setSelected }) {
   </div>
 }
 
+function Source({ source }) {
+  return <div className="source-row">
+    <span>{source.type}</span>
+    {source.zone && <>{source.zoneUrl ? <a href={source.zoneUrl} target="_blank" rel="noreferrer">{source.zone}</a> : <b>{source.zone}</b>}<i>→</i></>}
+    {source.url ? <a href={source.url} target="_blank" rel="noreferrer">{source.name}</a> : <b>{source.name}</b>}
+  </div>
+}
+
+function Sources({ sources = [] }) {
+  if (!sources.length) return <div className="source-missing">Source not listed on the wiki</div>
+  if (sources.length === 1) return <div className="sources"><Source source={sources[0]} /></div>
+  return <div className="sources"><Source source={sources[0]} /><details><summary>+{sources.length - 1} more {sources.length === 2 ? 'source' : 'sources'}</summary><div>{sources.slice(1).map((source, index) => <Source key={`${source.type}-${source.name}-${index}`} source={source} />)}</div></details></div>
+}
+
 function App() {
   const [items, setItems] = useState([])
   const [meta, setMeta] = useState({})
@@ -71,7 +85,7 @@ function App() {
         <div className="gear-grid">
           {visibleGear.map(({ label, item }) => <article key={label} className={label.startsWith('ANY') ? 'gear-card any' : 'gear-card'}>
             <div className="slot"><span>{label.startsWith('ANY') ? '✦' : '◇'}</span>{label}</div>
-            {item ? <><a href={item.wikiUrl} target="_blank" rel="noreferrer">{item.name}</a><div className="item-stats">{Object.entries(item.stats).filter(([,value]) => value).slice(0,5).map(([stat,value]) => <span key={stat} className={stat === target ? 'target' : ''}>{stat} {value > 0 ? '+' : ''}{value}</span>)}</div><small>{item.classes.includes('ALL') ? 'All classes' : item.classes.join(' · ')}</small></> : <><b className="empty">No matching item</b><small>Try another target or trio</small></>}
+            {item ? <><a href={item.wikiUrl} target="_blank" rel="noreferrer">{item.name}</a><div className="item-stats">{Object.entries(item.stats).filter(([,value]) => value).slice(0,5).map(([stat,value]) => <span key={stat} className={stat === target ? 'target' : ''}>{stat} {value > 0 ? '+' : ''}{value}</span>)}</div><small>{item.classes.includes('ALL') ? 'All classes' : item.classes.join(' · ')}</small><Sources sources={item.sources} /></> : <><b className="empty">No matching item</b><small>Try another target or trio</small></>}
           </article>)}
         </div>
       </section>

@@ -11,6 +11,62 @@ const STAT_NAMES = ['AC','HP','MANA','STR','STA','DEX','AGI','INT','WIS','CHA','
 const CLASS_CODES = ['WAR','CLR','PAL','RNG','SHD','DRU','MNK','BRD','ROG','SHM','NEC','WIZ','MAG','ENC','BST','BER']
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
+function wikiUrl(title) {
+  return `https://eqlwiki.com/${encodeURIComponent(title.replaceAll(' ', '_'))}`
+}
+
+function fieldValue(text, name) {
+  return text.match(new RegExp(`\\|${name}\\s*=([\\s\\S]*?)(?=\\n\\s*\\|[\\w_]+\\s*=|\\n\\s*}})`, 'i'))?.[1]?.trim() || ''
+}
+
+function wikiLinks(line) {
+  return [...line.matchAll(/\[\[:?([^\]|#]+)(?:#[^\]|]+)?(?:\|([^\]]+))?\]\]/g)].map((match) => ({
+    title: match[1].trim(),
+    name: (match[2] || match[1]).trim(),
+    url: wikiUrl(match[1].trim()),
+  }))
+}
+
+function plainText(value) {
+  return value
+    .replace(/\{\{[^}]+}}/g, '')
+    .replace(/\[https?:\/\/\S+\s+([^\]]+)]/g, '$1')
+    .replace(/\[\[:?([^\]|]+)(?:\|([^\]]+))?\]\]/g, (_match, title, label) => label || title)
+    .replace(/'{2,}/g, '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\([^)]*(?:rare|always|chance|classic)[^)]*\)/ig, '')
+    .trim()
+}
+
+function parseSources(value, type) {
+  if (!value) return []
+  const sources = []
+  let zone = null
+  for (const rawLine of value.split(/\r?\n/)) {
+    const line = rawLine.trim()
+    if (!line) continue
+    const links = wikiLinks(line)
+    const isListItem = /^\*+/.test(line)
+    if (!isListItem && links.length) {
+      zone = links[0]
+      continue
+    }
+    if (!isListItem) continue
+    const primary = links[0]
+    const inlineZone = type === 'Quest' ? links[1] : null
+    const fallbackName = plainText(line.replace(/^\*+\s*/, ''))
+    if (!primary && !fallbackName) continue
+    sources.push({
+      type,
+      name: primary?.name || fallbackName,
+      url: primary?.url || null,
+      zone: inlineZone?.name || zone?.name || null,
+      zoneUrl: inlineZone?.url || zone?.url || null,
+    })
+  }
+  return sources
+}
+
 async function api(params) {
   const url = new URL(API)
   for (const [key, value] of Object.entries({ ...params, format: 'json', formatversion: '2', origin: '*' })) url.searchParams.set(key, value)
@@ -24,7 +80,7 @@ async function api(params) {
 }
 
 export function parseItem(title, text) {
-  const block = text.match(/\|statsblock\s*=([\s\S]*?)(?=\n\s*\|[\w_]+\s*=|\n\s*}})/i)?.[1]
+  const block = fieldValue(text, 'statsblock')
   if (!block) return null
   const clean = block.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, ' ').replace(/&nbsp;|\u00a0/g, ' ')
   const slotLine = clean.match(/(?:^|\n)\s*Slots?\s*:\s*([^\n]+)/i)?.[1]
@@ -40,13 +96,20 @@ export function parseItem(title, text) {
     if (match) stats[stat] = Number(match[1])
   }
   if (!Object.keys(stats).length) return null
+  const sources = [
+    ...parseSources(fieldValue(text, 'dropsfrom'), 'Drop'),
+    ...parseSources(fieldValue(text, 'relatedquests'), 'Quest'),
+    ...parseSources(fieldValue(text, 'soldby'), 'Vendor'),
+    ...parseSources(fieldValue(text, 'playercrafted'), 'Crafted'),
+  ]
   return {
     name: title,
     slots,
     classes,
     stats,
     lore: /\bLORE (?:ITEM|EQUIPPED)\b/i.test(clean),
-    wikiUrl: `https://eqlwiki.com/${encodeURIComponent(title.replaceAll(' ', '_'))}`,
+    wikiUrl: wikiUrl(title),
+    sources,
   }
 }
 

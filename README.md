@@ -5,7 +5,7 @@ A static, browser-based gear planner for **EverQuest Legends** three-class chara
 ## How it works
 
 - React and Vite provide the static interface.
-- `scripts/fetch-wiki-items.mjs` reads equipment pages from the EQL Wiki MediaWiki API and normalizes item slots, allowed classes, stats, and lore status.
+- `scripts/fetch-wiki-items.mjs` reads equipment pages from the EQL Wiki MediaWiki API and normalizes item slots, allowed classes, stats, lore status, and linked drop/quest/vendor sources.
 - The optimizer runs entirely in the browser; there is no application server.
 - GitHub Actions refreshes the dataset, tests, builds, and deploys to GitHub Pages on pushes, manual runs, and once daily.
 

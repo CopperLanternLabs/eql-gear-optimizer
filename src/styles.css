@@ -49,12 +49,22 @@ main { max-width: 1180px; margin: 0 auto; padding: 0 28px 80px; }
 .gear-toolbar input { width: 210px; background: #11100e; border: 1px solid #3c3730; padding: 9px 11px; color: #eee9df; outline: none; }
 .gear-toolbar input:focus { border-color: #b88a49; }
 .gear-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 1px; background: #302c26; border-top: 1px solid #302c26; }
-.gear-card { background: #171512; min-height: 120px; padding: 20px 24px; position: relative; }
+.gear-card { background: #171512; min-height: 152px; padding: 20px 24px; position: relative; }
 .gear-card.any { background: #201a13; box-shadow: inset 3px 0 #c79b59; }
 .slot { display: flex; gap: 7px; color: #777169; font: 700 .67rem monospace; margin-bottom: 13px; }
 .gear-card > a { color: #eee4d4; font: 400 1.07rem Georgia,serif; text-decoration: none; }
 .gear-card > a:hover { color: #d7a65e; }
 .gear-card > small { display: block; margin-top: 10px; color: #69645d; font-size: .67rem; }
+.sources, .source-missing { margin-top: 13px; padding-top: 11px; border-top: 1px solid #2e2a24; color: #777169; font-size: .68rem; }
+.sources details { margin-top: 8px; }
+.sources summary { color: #a88c62; cursor: pointer; text-transform: uppercase; letter-spacing: .07em; font: 600 .62rem monospace; }
+.sources details > div { margin-top: 9px; display: grid; gap: 7px; }
+.source-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.source-row > span { color: #928b81; background: #29241e; padding: 3px 5px; text-transform: uppercase; font: 600 .59rem monospace; }
+.source-row a { color: #bca47e; text-decoration-color: #655844; text-underline-offset: 2px; }
+.source-row a:hover { color: #e0b978; }
+.source-row b { color: #999187; font-weight: 500; }
+.source-row i { color: #5e584f; font-style: normal; }
 .item-stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 9px; }
 .item-stats span { color: #8f8980; font: .67rem monospace; }
 .item-stats .target { color: #d7a65e; font-weight: 700; }
