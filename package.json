@@ -1,0 +1,19 @@
+{
+  "name": "eql-gear-optimizer",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node --test",
+    "data:refresh": "node scripts/fetch-wiki-items.mjs"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "5.0.4",
+    "vite": "7.3.6",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  }
+}
